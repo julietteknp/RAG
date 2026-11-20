@@ -1,0 +1,31 @@
+[project]
+name = "rag"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Juliette", email = "juliette.konop@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "bm25>=0.3.16",
+    "fire>=0.7.1",
+    "pydantic>=2.14.4",
+    "tqdm>=4.70.1",
+]
+
+[project.scripts]
+rag = "rag:main"
+
+[build-system]
+requires = ["uv_build>=0.13.6,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "flake8>=7.5.0",
+    "mypy>=2.4.1",
+]
+
+[tool.uv]
+package = false
