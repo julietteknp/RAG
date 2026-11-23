@@ -11,14 +11,18 @@ from src.models import Chunk
 from src.tokenizer import tokenize
 
 
+EXCLUDED_DIRS = ("tests",)
+
+
 def list_files(raw_dir: str) -> list[str]:
-    """Return the paths of all .py, .md and .txt files under raw_dir."""
+    """Return the paths of the .py, .md and .txt files under raw_dir."""
     files: list[str] = []
     for path in Path(raw_dir).rglob("*"):
+        if any(part in EXCLUDED_DIRS for part in path.parts):
+            continue
         if path.is_file() and path.suffix in (".py", ".md", ".txt"):
             files.append(str(path))
     return sorted(files)
-
 
 def build_chunks(files: list[str], max_size: int) -> list[Chunk]:
     """Read every file and split it into chunks."""

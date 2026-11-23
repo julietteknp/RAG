@@ -5,6 +5,9 @@ import fire
 from src.indexer import run_index
 from src.retriever import Retriever, run_search_dataset
 
+from src.evaluate import run_evaluate
+
+from src.generator import Generator, run_answer_dataset
 
 class RagCLI:
     """Commands of the RAG system."""
@@ -63,6 +66,55 @@ class RagCLI:
             )
         except Exception as error:
             print(f"Error: {error}")
+    
+    def evaluate(
+        self, student_search_results_path: str, dataset_path: str
+    ) -> None:
+        """Print the recall@k of search results against a dataset."""
+        try:
+            run_evaluate(str(student_search_results_path), str(dataset_path))
+        except Exception as error:
+            print(f"Error: {error}")
+
+    def answer(
+        self, query: str, k: int = 5, processed_dir: str = "data/processed"
+    ) -> None:
+        """Answer a single query using the retrieved context."""
+        if not isinstance(k, int):
+            print("Error: k must be an integer")
+            return
+        if not str(query).strip():
+            print("Error: the query is empty")
+            return
+        try:
+            sources = Retriever(processed_dir).search(str(query), k)
+            answer = Generator().answer(str(query), sources)
+        except Exception as error:
+            print(f"Error: {error}")
+            return
+        print("Sources:")
+        for source in sources:
+            print(
+                f"  {source.file_path} "
+                f"[{source.first_character_index}:"
+                f"{source.last_character_index}]"
+            )
+        print("Answer:")
+        print(answer)
+
+    def answer_dataset(
+        self,
+        student_search_results_path: str,
+        save_directory: str = "data/output/search_results_and_answer",
+    ) -> None:
+        """Generate answers for every question of a search results file."""
+        try:
+            run_answer_dataset(
+                str(student_search_results_path), str(save_directory)
+            )
+        except Exception as error:
+            print(f"Error: {error}")
+    
 
 if __name__ == "__main__":
     fire.Fire(RagCLI)
