@@ -12,10 +12,10 @@ from src.tokenizer import tokenize
 
 
 def list_files(raw_dir: str) -> list[str]:
-    """Return the paths of all .py and .md files under raw_dir."""
+    """Return the paths of all .py, .md and .txt files under raw_dir."""
     files: list[str] = []
     for path in Path(raw_dir).rglob("*"):
-        if path.is_file() and path.suffix in (".py", ".md"):
+        if path.is_file() and path.suffix in (".py", ".md", ".txt"):
             files.append(str(path))
     return sorted(files)
 
