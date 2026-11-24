@@ -14,6 +14,8 @@ from src.models import (
 )
 from src.retriever import Retriever
 
+from typing import Any
+
 MODEL_NAME = "Qwen/Qwen3-0.6B"
 MAX_CONTEXT_TOKENS = 3000
 MAX_NEW_TOKENS = 256
@@ -52,9 +54,8 @@ class Generator:
         """Load the tokenizer and the model on the best available device."""
         self.device = pick_device()
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModelForCausalLM.from_pretrained(model_name).to(
-            self.device
-        )
+        model: Any = AutoModelForCausalLM.from_pretrained(model_name)
+        self.model = model.to(self.device)
         print(f"Model loaded on {self.device}")
 
     def count_tokens(self, text: str) -> int:
@@ -96,10 +97,12 @@ class Generator:
             **inputs, max_new_tokens=MAX_NEW_TOKENS, do_sample=False
         )
         prompt_length = inputs["input_ids"].shape[1]
-        answer: str = self.tokenizer.decode(
+        decoded = self.tokenizer.decode(
             outputs[0][prompt_length:], skip_special_tokens=True
         )
-        return answer.strip()
+        if isinstance(decoded, list):
+            decoded = " ".join(decoded)
+        return decoded.strip()
 
 
 def run_answer_dataset(results_path: str, save_directory: str) -> None:

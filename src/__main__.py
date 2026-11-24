@@ -2,12 +2,11 @@
 
 import fire
 
+from src.evaluate import run_evaluate
+from src.generator import Generator, run_answer_dataset
 from src.indexer import run_index
 from src.retriever import Retriever, run_search_dataset
 
-from src.evaluate import run_evaluate
-
-from src.generator import Generator, run_answer_dataset
 
 class RagCLI:
     """Commands of the RAG system."""
@@ -22,7 +21,9 @@ class RagCLI:
         if not isinstance(max_chunk_size, int) or not (
             0 < max_chunk_size <= 2000
         ):
-            print("Error: max_chunk_size must be an integer between 1 and 2000")
+            print(
+                "Error: max_chunk_size must be an integer between 1 and 2000"
+            )
             return
         try:
             run_index(raw_dir, processed_dir, max_chunk_size)
@@ -48,7 +49,7 @@ class RagCLI:
                 f"[{source.first_character_index}:"
                 f"{source.last_character_index}]"
             )
-    
+
     def search_dataset(
         self,
         dataset_path: str,
@@ -66,7 +67,7 @@ class RagCLI:
             )
         except Exception as error:
             print(f"Error: {error}")
-    
+
     def evaluate(
         self, student_search_results_path: str, dataset_path: str
     ) -> None:
@@ -114,7 +115,7 @@ class RagCLI:
             )
         except Exception as error:
             print(f"Error: {error}")
-    
+
 
 if __name__ == "__main__":
     fire.Fire(RagCLI)

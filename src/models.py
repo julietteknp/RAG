@@ -61,6 +61,7 @@ class StudentSearchResultsAndAnswer(BaseModel):
     search_results: List[MinimalAnswer]
     k: int
 
+
 class Chunk(MinimalSource):
     """A piece of a corpus file, ready to be indexed."""
 

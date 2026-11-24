@@ -1,5 +1,8 @@
 """Split corpus files into chunks."""
 
+import ast
+import warnings
+
 from src.models import Chunk
 
 
@@ -66,15 +69,60 @@ def chunk_markdown(text: str, file_path: str, max_size: int) -> list[Chunk]:
         )
     return chunks
 
+
+def chunk_python(text: str, file_path: str, max_size: int) -> list[Chunk]:
+    """Split Python code into chunks, one block per top-level def or class."""
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            tree = ast.parse(text)
+    except (SyntaxError, ValueError, RecursionError):
+        return make_chunks(text, file_path, 0, len(text), max_size, "")
+    line_starts = [0]
+    for i, char in enumerate(text):
+        if char == "\n":
+            line_starts.append(i + 1)
+    boundaries: list[tuple[int, str]] = []
+    for node in tree.body:
+        if isinstance(
+            node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+        ):
+            first_line = min(
+                [node.lineno] + [d.lineno for d in node.decorator_list]
+            )
+            boundaries.append((line_starts[first_line - 1], node.name))
+    chunks: list[Chunk] = []
+    start = 0
+    title = ""
+    for offset, name in boundaries:
+        if offset > start:
+            chunks.extend(
+                make_chunks(text, file_path, start, offset, max_size, title)
+            )
+        start = offset
+        title = name
+    if start < len(text):
+        chunks.extend(
+            make_chunks(text, file_path, start, len(text), max_size, title)
+        )
+    return chunks
+
+
 def chunk_file(text: str, file_path: str, max_size: int) -> list[Chunk]:
     """Split a file into chunks, depending on its extension."""
     if file_path.endswith(".md"):
         return chunk_markdown(text, file_path, max_size)
-    # pour l'instant, les .py sont découpés simplement
+    if file_path.endswith(".py"):
+        return chunk_python(text, file_path, max_size)
     return make_chunks(text, file_path, 0, len(text), max_size, "")
 
+
 if __name__ == "__main__":
-    texte = "# LoRA\nIntro.\n## Usage\nline one\nline two\nline three\n"
-    for chunk in chunk_markdown(texte, "test.md", 20):
+    code = (
+        "import os\n\nX = 1\n\n\n@cache\ndef load_config():\n"
+        "    return X\n\n\nclass Server:\n    def start(self):\n"
+        "        pass\n"
+    )
+    for chunk in chunk_python(code, "test.py", 2000):
         print(chunk.first_character_index, chunk.last_character_index)
         print(repr(chunk.search_text))
