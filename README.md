@@ -1,4 +1,5 @@
 *This activity has been created as part of the 42 curriculum by jkonop*
+
 # RAG against the machine
 
 A Retrieval-Augmented Generation (RAG) system that answers questions about the
@@ -48,21 +49,75 @@ recall@5 on code questions** (required: 80 % and 50 %).
 
 ### Installation
 
+PyTorch and the model weights take several GB. On machines with a small home
+quota (such as 42 computers), work from a location with enough free space
+(here `sgoinfre`) and point the caches there. Replace `<login>` with your
+login. The commands below assume that the resources provided with the subject
+were extracted in `~/Downloads/data+moulinette/`.
+
+**1. Choose a location with enough disk space**
+
+```bash
+export WORKDIR=/sgoinfre/goinfre/Perso/<login>
+export UV_CACHE_DIR=$WORKDIR/uv-cache      # uv download cache
+export HF_HOME=$WORKDIR/huggingface        # Hugging Face model cache
+cd $WORKDIR
+git clone <repository_url> RAG
+cd RAG
+```
+
+The two `export` lines only last for the current terminal. To keep them,
+add them to `~/.zshrc` (or `~/.bashrc`).
+
+**2. Install the dependencies**
+
 ```bash
 make install        # runs `uv sync`
 ```
 
-The data is not part of the repository. Place the files provided with the
-subject as follows:
+**3. Copy the data and the grader**
+
+The data is not part of the repository.
+
+```bash
+mkdir -p data/raw data/datasets
+cp -r ~/Downloads/data+moulinette/vllm-0.10.1 data/raw/
+cp -r ~/Downloads/data+moulinette/datasets_public/public/* data/datasets/
+cp ~/Downloads/data+moulinette/moulinette/moulinette_pkg/moulinette-ubuntu ./moulinette
+chmod +x moulinette
+```
+
+Expected layout:
 
 ```
 data/raw/vllm-0.10.1/                 # the vLLM repository to index
 data/datasets/UnansweredQuestions/    # questions (input of search_dataset)
 data/datasets/AnsweredQuestions/      # ground truth (for evaluate)
+moulinette                            # official grader
 ```
 
-The first time an answer is generated, the model is downloaded automatically
-from Hugging Face (about 1.5 GB) and cached in `~/.cache/huggingface/`.
+**4. The model**
+
+There is nothing to copy: the first time an answer is generated, the model
+`Qwen/Qwen3-0.6B` is downloaded automatically from Hugging Face (about 1.5 GB)
+into `$HF_HOME`. To download it in advance:
+
+```bash
+uv run python -c "from transformers import AutoModelForCausalLM, AutoTokenizer; \
+AutoTokenizer.from_pretrained('Qwen/Qwen3-0.6B'); \
+AutoModelForCausalLM.from_pretrained('Qwen/Qwen3-0.6B')"
+```
+
+**5. Check with the official grader**
+
+```bash
+make index
+make search
+./moulinette evaluate_student_search_results \
+    data/output/search_results/UnansweredQuestions/dataset_docs_public.json \
+    data/datasets/AnsweredQuestions/dataset_docs_public.json \
+    --k 10 --max_context_length 2000
+```
 
 ### Running
 

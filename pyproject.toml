@@ -28,6 +28,7 @@ build-backend = "uv_build"
 dev = [
     "flake8>=7.5.0",
     "mypy>=2.4.1",
+    "types-tqdm>=4.70.0.20261122",
 ]
 
 [tool.uv]

@@ -57,4 +57,4 @@ lint:
 
 lint-strict:
 	uv run flake8 . --exclude $(FLAKE8_EXCLUDE)
-	uv run mypy . --exclude $(MYPY_EXCLUDE) --strict
+	uv run mypy . --exclude $(MYPY_EXCLUDE) --strict --ignore-missing-imports
